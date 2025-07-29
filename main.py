@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from google import genai
 import sys
 from google.genai import types
+from config import system_prompt
+from functions.get_files_info import schema_get_files_info
 
 user_prompt = sys.argv[1]
 messages = [
@@ -18,20 +20,27 @@ def main():
         print("no prompt given")
         sys.exit(1)
 
-    # print(sys.argv)
-
-    messages = [
-        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
-    ]
-    
+    available_functions = types.Tool(
+        function_declarations=[
+            schema_get_files_info,
+        ]
+    )
+        
     response = client.models.generate_content(
         model = 'gemini-2.0-flash-001', 
-        contents = messages
+        contents = messages,
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=system_prompt
+        )
     )
+
+    function_call_part = response.function_calls[0]
     pr_tokens = response.usage_metadata.prompt_token_count
     res_tokens = response.usage_metadata.candidates_token_count
     if "--verbose" in sys.argv:
         print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
+    elif response.function_calls != None:
+        print(f"Calling function: {function_call_part.name})({function_call_part.args})")
     else:
         print(f"{response.text}")
 
