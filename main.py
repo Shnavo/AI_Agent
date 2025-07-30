@@ -46,7 +46,7 @@ def main():
     if "--verbose" in sys.argv:
         print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
     elif response.function_calls != None:
-        print(f"Calling function: {function_call_part.name})({function_call_part.args})")
+        print(f"Calling function: {function_call_part.name}({function_call_part.args})")#{response.function_calls}")
     else:
         print(f"{response.text}")
 
