@@ -8,6 +8,7 @@ from functions.get_files_info import schema_get_files_info
 from functions.get_file_content import schema_get_file_content
 from functions.write_file import schema_write_file
 from functions.run_python_file import schema_run_python_file
+from functions.call_function import call_function
 
 user_prompt = sys.argv[1]
 messages = [
@@ -41,15 +42,26 @@ def main():
     )
 
     function_call_part = response.function_calls[0]
+    function_call_part.args['working_directory'] = './calculator'
     pr_tokens = response.usage_metadata.prompt_token_count
     res_tokens = response.usage_metadata.candidates_token_count
-    if "--verbose" in sys.argv:
-        print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
-    elif response.function_calls != None:
-        print(f"Calling function: {function_call_part.name}({function_call_part.args})")#{response.function_calls}")
-    else:
-        print(f"{response.text}")
 
+    if response.function_calls != None and ("--verbose" in sys.argv):
+        function_call_result = call_function(function_call_part, verbose=True)
+        if function_call_result.parts[0].function_response.response == None:
+            raise Exception("Something went wrong")
+        else:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
+    elif response.function_calls != None:
+        function_call_result = call_function(function_call_part)
+        if function_call_result.parts[0].function_response.response == None:
+            raise Exception("Something went wrong")
+        else:
+            print(f"{response.text}")
+    elif response.function_calls == None:
+        print(f"{response.text}")
+    elif response.function_calls == None and ("--verbose" in sys.argv):
+        print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
 
 if __name__ == "__main__":
     main()

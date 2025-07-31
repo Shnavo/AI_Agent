@@ -29,7 +29,12 @@ schema_write_file = types.FunctionDeclaration(
             ),
             "content": types.Schema(
                 type=types.Type.STRING,
-                description="The content that needs to be written into the provided file_path"
+                description="The content that needs to be written into the provided file_path",
+            ),
+            "working_directory": types.Schema(
+                type=types.Type.STRING,
+                default="./calculator",
+                description="workin_directory is always ./calculator"
             )
         },
     ),
