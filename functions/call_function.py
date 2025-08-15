@@ -1,27 +1,27 @@
-from functions.get_files_info import get_files_info
-from functions.get_file_content import get_file_content
-from functions.write_file import write_file
-from functions.run_python_file import run_python_file
-import subprocess
+from functions.get_files_info import get_files_info, schema_get_files_info
+from functions.get_file_content import get_file_content, schema_get_file_content
+from functions.run_python_file import run_python_file, schema_run_python_file
+from functions.write_file import write_file, schema_write_file
 from google.genai import types
 
+available_functions = types.Tool(
+    function_declarations=[
+        schema_get_files_info,
+        schema_get_file_content,
+        schema_write_file,
+        schema_run_python_file
+    ]
+)
 
 def call_function(function_call_part, verbose=False):
     if verbose:
         print(f"Calling function: {function_call_part.name}({function_call_part.args})")
     else:
         print(f"Calling function: {function_call_part.name}")
-    
-    arguments = ["python", function_call_part.name]
-    arguments.extend(function_call_part.args)
+
     function_name = function_call_part.name
     function_args = function_call_part.args
 
-    # match function_name:
-    #     case get_files_info:
-    #         get_files_info(**function_args)
-    #     case get_file_content:
-    #         get_file_content(**function_args)
     if function_name == "get_files_info":
         function_result = get_files_info(**function_args)
     elif function_name == "get_file_content":
@@ -49,3 +49,11 @@ def call_function(function_call_part, verbose=False):
             )
         ],
     )
+
+
+
+    # match function_name:
+    #     case get_files_info:
+    #         get_files_info(**function_args)
+    #     case get_file_content:
+    #         get_file_content(**function_args)
