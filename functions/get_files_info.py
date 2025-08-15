@@ -3,9 +3,17 @@ from google.genai import types
 
 
 def get_files_info(working_directory, directory="."):
+    if "calculator" in directory:
+        directory = "."
+    
     full_path = os.path.join(working_directory, directory)
     abspath = os.path.abspath(full_path)
     abs_working_path = os.path.abspath(working_directory)
+    
+    # print(directory)
+    # print(full_path)
+    # print(abspath)
+
 
     if not (abspath == abs_working_path or abspath.startswith(abs_working_path + os.sep)):
         return f'Error: Cannot list "{directory}" as it is outside the permitted working directory'

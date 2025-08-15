@@ -1,14 +1,10 @@
+import sys
 import os
 from dotenv import load_dotenv
 from google.genai import types
 from google import genai
-import sys
 from config import system_prompt
-from functions.get_files_info import schema_get_files_info
-from functions.get_file_content import schema_get_file_content
-from functions.write_file import schema_write_file
-from functions.run_python_file import schema_run_python_file
-from functions.call_function import call_function, available_functions
+from call_function import call_function, available_functions
 
 def main():  
     if len(sys.argv) < 2:
@@ -28,8 +24,23 @@ def main():
             parts=[types.Part(text=user_prompt)]
             ),
     ]
-
-    generate_content(client, messages, verbose, user_prompt)
+    i=0
+    while i<20:
+        i+=1
+        try:
+            response = generate_content(client, messages, verbose, user_prompt)
+            for candidate in response.candidates:
+                messages.append(
+                    types.Content(
+                        role="user", 
+                        parts=[types.Part(text=str(candidate.content))]
+                    )
+                )
+        except Exception as e:
+            print("there was a problem:", e)
+        if response.text:
+            print(response.text)
+            break
 
 def generate_content(client, messages, verbose, user_prompt):
         
@@ -40,7 +51,7 @@ def generate_content(client, messages, verbose, user_prompt):
             tools=[available_functions], system_instruction=system_prompt
         )
     )
-
+    
     
     pr_tokens = response.usage_metadata.prompt_token_count
     res_tokens = response.usage_metadata.candidates_token_count
@@ -49,6 +60,7 @@ def generate_content(client, messages, verbose, user_prompt):
         handle_function_calls(response, verbose)
     else:
         handle_text_response(response, verbose, user_prompt, pr_tokens, res_tokens)
+    return response
 
 
 def handle_function_calls(response, verbose):
@@ -72,8 +84,6 @@ def handle_text_response(response, verbose, user_prompt, pr_tokens, res_tokens):
         print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
     else:
         print(f"{response.text}")
-    elif response.function_calls == None and ("--verbose" in sys.argv):
-        print(f"{response.text}\nUser prompt: {user_prompt}\nPrompt tokens: {pr_tokens}\nResponse tokens: {res_tokens}")
 
 if __name__ == "__main__":
     main()
