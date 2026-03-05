@@ -37,10 +37,8 @@ def main():
                 return
         except Exception as e:
             print(f"Error in generate_content: {e}")
-        print(
-            f"Program exited as maximum number of iterations {MAX_ITERS} was reached without result"
-        )
-        sys.exit(1)
+    print(f"Program exited as maximum number of iterations {MAX_ITERS} was reached without result")
+    sys.exit(1)
 
 
 def generate_content(client, messages, verbose):
@@ -81,7 +79,6 @@ def generate_content(client, messages, verbose):
             print(f"-> {result.parts[0].function_response.response}")
 
     messages.append(types.Content(role="user", parts=function_response))
-    return messages
 
 
 if __name__ == "__main__":
