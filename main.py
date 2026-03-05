@@ -1,7 +1,11 @@
 import os
 import argparse
+import sys
+
 from config_items.prompt import system_prompt
+from config_items.config import MAX_ITERS
 from call_function import available_functions, call_function
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -24,7 +28,19 @@ def main():
     if args.verbose:
         print(f"User prompt: {args.user_prompt}")
 
-    generate_content(client, messages, args.verbose)
+    for _ in range(MAX_ITERS):
+        try:
+            final_response = generate_content(client, messages, args.verbose)
+            if final_response:
+                print("Final response:")
+                print(final_response)
+                return
+        except Exception as e:
+            print(f"Error in generate_content: {e}")
+        print(
+            f"Program exited as maximum number of iterations {MAX_ITERS} was reached without result"
+        )
+        sys.exit(1)
 
 
 def generate_content(client, messages, verbose):
@@ -36,6 +52,11 @@ def generate_content(client, messages, verbose):
         ),
     )
 
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.content:
+                messages.append(candidate.content)
+
     if not response.usage_metadata:
         raise RuntimeError("Gemini API response appears to be missing")
 
@@ -44,9 +65,7 @@ def generate_content(client, messages, verbose):
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
     if not response.function_calls:
-        print("Response:")
-        print(response.text)
-        return
+        return response.text
 
     function_response = []
     for function_call in response.function_calls:
@@ -60,6 +79,9 @@ def generate_content(client, messages, verbose):
         function_response.append(result.parts[0])
         if verbose:
             print(f"-> {result.parts[0].function_response.response}")
+
+    messages.append(types.Content(role="user", parts=function_response))
+    return messages
 
 
 if __name__ == "__main__":
